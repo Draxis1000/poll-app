@@ -13,7 +13,7 @@ WHERE polls.id = %s;"""
 
 INSERT_OPTION = "INSERT INTO options (option_text, poll_id) VALUES %s;"
 INSERT_VOTE = "INSERT INTO votes (username, option_id) VALUES (%s, %s);"
-
+INSERT_POLL_RETURN_ID = "INSERT INTO polls (title, owner_username) VALUES (%s, %s) RETURNING id;"
 
 def create_tables(connection):
     with connection:
@@ -58,7 +58,13 @@ def get_random_poll_vote(connection, option_id):
 def create_poll(connection, title, owner, options):
     with connection:
         with connection.cursor() as cursor:
-            pass
+            cursor.execute(INSERT_POLL_RETURN_ID, (title, owner))
+
+            poll_id = cursor.fetchone()[0]
+            option_values = [(option_text, poll_id) for option_text in options]
+
+            for option_value in option_values:
+                cursor.execute(INSERT_OPTION, option_value)
 
 
 def add_poll_vote(connection, username, option_id):
